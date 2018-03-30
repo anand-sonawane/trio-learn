@@ -49,7 +49,7 @@ def avg_pooling_layer(layer_name, input_maps, kernel_size=[2, 2], stride=[1, 2, 
 
 
 # construct a fully connection layer
-def fully_connection_layer(layer_name, input_maps, num_output_nodes):
+def fully_connection_layer(layer_name, input_maps, num_output_nodes,activation):
     shape = input_maps.get_shape()
     
     #if layer == 4 then we will flatten the layer
@@ -64,7 +64,10 @@ def fully_connection_layer(layer_name, input_maps, num_output_nodes):
                                  initializer=tf.contrib.layers.xavier_initializer())
         bias = tf.Variable(tf.constant(0.1, shape=[num_output_nodes], dtype=tf.float32), trainable=True, name='b')
         flat = tf.reshape(input_maps, [-1, size])
-        output = tf.nn.relu(tf.nn.bias_add(tf.matmul(flat, kernel), bias))
+        if(activation == "relu"):
+            output = tf.nn.relu(tf.nn.bias_add(tf.matmul(flat, kernel), bias))
+        else:
+            output = tf.nn.softmax(tf.nn.bias_add(tf.matmul(flat, kernel), bias))
     return output, kernel, bias
 
 #lets create the vgg model
@@ -122,15 +125,15 @@ def vgg16(input_maps, num_classes=1000, isTrain=False, keep_prob=1.0):
     
     # output5_4 shape 7 x 7 x 512 flattened to 1 x 4096
 
-    output6_1, kernel6_1, bias6_1 = fully_connection_layer('fc6_1', output5_4, 4096)
+    output6_1, kernel6_1, bias6_1 = fully_connection_layer('fc6_1', output5_4, 4096, "relu")
     
     # fc6_2 shape 1 x 4096 flattened to 1 x 4096
     
-    output6_2, kernel6_2, bias6_2 = fully_connection_layer('fc6_2', output6_1, 4096)
+    output6_2, kernel6_2, bias6_2 = fully_connection_layer('fc6_2', output6_1, 4096, "relu")
     
     # fc6_2 shape 1 x 4096 flattened to num_classes for softmax
     
-    output6_3, kernel6_3, bias6_3 = fully_connection_layer('fc6_3', output6_2, num_classes)
+    output6_3, kernel6_3, bias6_3 = fully_connection_layer('fc6_3', output6_2, num_classes, "softmax")
     
     return output6_3
 
